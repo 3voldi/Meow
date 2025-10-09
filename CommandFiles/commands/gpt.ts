@@ -92,7 +92,7 @@ async function main({
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
     "Sec-Fetch-User": "?1",
-    Cookie: "__stripe_mid=7cee4280-8e2d-43b6-a714-a99393dc8fb0a84de5",
+    Cookie: "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",
     "Upgrade-Insecure-Requests": "1",
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
