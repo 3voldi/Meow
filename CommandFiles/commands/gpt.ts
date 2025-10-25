@@ -6,16 +6,16 @@ import * as fs from "fs";
 const cmd = easyCMD({
   name: "gpt",
   meta: {
-    otherNames: ["gpt4o", "ai", "ask"],
-    author: "From Aryan Chauhan REST API, handled by Liane Cagara",
+    otherNames: ["gpt4o", "ai2", "ask"],
+    author: "Christus Dev AI",
     description:
       "A versatile assistant that provides information, answers questions, and assists with a wide range of tasks.",
     icon: "🤖",
-    version: "1.4.0",
+    version: "1.3.1",
     noPrefix: "both",
   },
   title: {
-    content: ""GPT-4O FREE 🖼️🎓",",
+    content: "GPT-4O FREE 🖼️🎓",
     text_font: "bold",
     line_bottom: "default",
   },
@@ -30,19 +30,9 @@ const cmd = easyCMD({
 });
 
 export interface ResponseType {
-  status: boolean;
   message: string;
-  result?: {
-    id: string;
-    model: string;
-    choices: {
-      index: number;
-      message: {
-        role: string;
-        content: string;
-      };
-    }[];
-  };
+  status?: boolean;
+  result?: any;
 }
 
 async function main({
@@ -53,15 +43,15 @@ async function main({
   input,
   cancelCooldown,
   usersDB,
+  command,
 }: CommandContext) {
   let ask = args.join(" ");
   await output.reaction("🟡");
-
   if (!ask) {
     cancelCooldown();
     await output.reaction("🔴");
     return output.reply(
-      `🔎 Please provide a question for **gpt**.\n\n***Example*** ${prefix}${commandName} what is artificial intelligence?`
+      `❓ Please provide a question for **Christus Bot**.\n\n***Example:*** ${prefix}${commandName} what is quantum AI?`
     );
   }
 
@@ -77,48 +67,40 @@ async function main({
   }
 
   if (input.replier && input.replier.body) {
-    ask = `${ask}\n\nUser replied with this message:\n\n${input.replier.body}`;
+    ask = `${ask}\n\nUser replied with:\n\n${input.replier.body}`;
   }
 
   if (input.replier && input.replier.attachmentUrls.length > 0) {
-    ask = `${ask}\n\nUser also sent these attachments:\n\n${input.replier.attachmentUrls.join(
+    ask = `${ask}\n\nUser also sent attachments:\n\n${input.replier.attachmentUrls.join(
       ", "
     )}`;
   }
 
   const headers: AxiosRequestConfig["headers"] = {
-    Accept: "application/json",
-    "User-Agent": "CassidyChatbot/1.4 (GPT Command)",
+    "Content-Type": "application/json",
   };
 
   output.setStyle(cmd.style);
 
-  // === New API integration ===
-  const apiUrl = `https://arychauhann.onrender.com/api/gpt-3.5-turbo`;
-  const params = new URLSearchParams({
-    prompt: ask,
-    uid: input.sid,
-    reset: "false",
+  // 🔁 Nouveau endpoint API (celui que tu as donné)
+  const apiURL = `https://arychauhann.onrender.com/api/gpt-3.5-turbo?prompt=${encodeURIComponent(
+    ask
+  )}&uid=${input.sid}&reset=`;
+
+  const res: AxiosResponse<ResponseType> = await axios.get(apiURL, {
+    headers,
   });
 
-  const res: AxiosResponse<ResponseType> = await axios.get(
-    `${apiUrl}?${params.toString()}`,
-    { headers }
-  );
-
-  const response = res.data;
-  const answer =
-    response.result?.choices?.[0]?.message?.content ||
-    response.message ||
-    "⚠️ No response received from the AI.";
+  const answer = res.data?.message || "⚠️ No response from Christus Bot.";
 
   const form: StrictOutputForm = {
-    body: answer + "\n\n***You can reply to this conversation.***",
+    body: `🌌 **Christus Bot**\n\n${answer}\n\n***You can reply to continue the conversation.***`,
   };
+
+  console.log(res.data, form);
 
   await output.reaction("🟢");
   const info = await output.reply(form);
-
   info.atReply((rep) => {
     rep.output.setStyle(cmd.style);
     main({ ...rep, args: rep.input.words });
