@@ -18,13 +18,13 @@ const config = {
 };
 
 const style = {
-  title: "🇨🇮 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗚𝗲𝗺𝗶𝗻𝗶 🇨🇮"
+  title: "🇨🇮 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗕𝗼𝘁 🇨🇮"
 };
 
 async function onCall({ message, args }) {
   const text = args.join(" ");
   if (!text)
-    return message.reply("❌ Please provide a question or message for Christus Gemini to answer.");
+    return message.reply("❌ Please provide a question or message for 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗕𝗼𝘁 to answer.");
 
   try {
     const url = `https://arychauhann.onrender.com/api/gemini-proxy2?prompt=${encodeURIComponent(text)}`;
