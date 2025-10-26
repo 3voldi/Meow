@@ -6,7 +6,7 @@
 import axios from "axios";
 
 const config = {
-  name: "ai",
+  name: "gemini",
   version: "2.2.1",
   permissions: [0],
   noPrefix: "both",
@@ -30,28 +30,21 @@ async function onCall({ message, args }) {
 
   try {
     const url = `https://arychauhann.onrender.com/api/gemini-proxy2?prompt=${encodeURIComponent(text)}`;
-
-    const res = await axios.get(url, {
-      headers: { "Content-Type": "application/json" }
-    });
+    const res = await axios.get(url, { headers: { "Content-Type": "application/json" } });
 
     if (!res.data || !res.data.result) {
       return message.reply("⚠️ No response received from the Christus Bot AI. Please try again later.");
     }
 
     const response = res.data.result.trim();
-    const timestamp = new Date().toLocaleString("en-US", { timeZone: "UTC" });
 
     const formattedMessage = 
 `━━━━━━━━━━━━━━━
 ${style.title}
 ━━━━━━━━━━━━━━━
 💬 𝗬𝗼𝘂 𝗮𝘀𝗸𝗲𝗱: ${text}
-💡 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗕𝗼𝘁'𝘀 𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲: ${response}
-
-📅 𝗧𝗶𝗺𝗲𝘀𝘁𝗮𝗺𝗽: ${timestamp} UTC
-━━━━━━━ ✕ ━━━━━━
-𝖠𝗌 𝖳𝗁𝖾 𝖩𝗈𝗎𝗋𝗇𝖾𝗒𝗌 𝖨𝗻 𝖳𝗁𝖾 𝖲𝗍𝖺𝗋𝗌, 𝖳𝗁𝖾𝗋𝖾'𝗌 𝖭𝗈 𝖲𝗍𝗈𝗉𝗉𝗂𝗇𝗀. 🇨🇮`;
+💡 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗴𝗲𝗺𝗶𝗻𝗶 𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲: ${response}
+━━━━━━━ ✕ ━━━━━━`;
 
     message.reply(formattedMessage);
 
