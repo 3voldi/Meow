@@ -4,16 +4,16 @@ import { StrictOutputForm } from "output-cassidy";
 const cmd = easyCMD({
   name: "deepseek",
   meta: {
-    otherNames: ["ds3", "askds", "seekai"],
+    otherNames: ["ds2", "askds2", "seekai2"],
     author: "Christus Dev AI",
     description:
-      "Talk with DeepSeek 3 — a smart and reliable AI assistant from Christus Bot.",
-    icon: "🧠",
-    version: "1.5.0",
+      "Talk with DeepSeek 2 — a smart AI assistant from Christus Bot.",
+    icon: "🤖",
+    version: "1.6.0",
     noPrefix: "both",
   },
   title: {
-    content: "DeepSeek 3 AI 💡",
+    content: "DeepSeek 2 AI 💡",
     text_font: "bold",
     line_bottom: "default",
   },
@@ -47,14 +47,15 @@ async function main({
     cancelCooldown();
     await output.reaction("❌");
     return output.reply(
-      `💬 Please enter a message for **DeepSeek 3**.\n\nExample: ${prefix}${commandName} Explain quantum computing.`
+      `💬 Please enter a message for **DeepSeek 2**.\n\nExample: ${prefix}${commandName} How does AI work?`
     );
   }
 
   try {
-    const apiURL = `https://arychauhann.onrender.com/api/deepseek3?prompt=${encodeURIComponent(
+    const apiURL = `https://arychauhann.onrender.com/api/deepseek2?prompt=${encodeURIComponent(
       ask
-    )}`;
+    )}&model=1`;
+
     const headers: AxiosRequestConfig["headers"] = {
       "Content-Type": "application/json",
     };
@@ -65,10 +66,10 @@ async function main({
     });
 
     const answer =
-      res.data?.result?.trim() || "⚠️ No response received from DeepSeek 3.";
+      res.data?.result?.trim() || "⚠️ No response received from DeepSeek 2.";
 
     const form: StrictOutputForm = {
-      body: `🧠 **DeepSeek 3**\n\n${answer}\n\n***Reply to continue the conversation.***`,
+      body: `🤖 **Christus DeepSeek 2 **\n\n${answer}\n\n***Reply to continue the conversation.***`,
     };
 
     await output.reaction("✅");
@@ -79,7 +80,7 @@ async function main({
       main({ ...rep, args: rep.input.words });
     });
   } catch (err: any) {
-    console.error("Error calling DeepSeek 3 API:", err?.message || err);
+    console.error("Error calling DeepSeek 2 API:", err?.message || err);
     await output.reaction("⚠️");
     cancelCooldown();
     return output.reply(
