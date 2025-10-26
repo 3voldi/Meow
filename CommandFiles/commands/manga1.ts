@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { StrictOutputForm } from "output-cassidy";
 
 const cmd = easyCMD({
-  name: "manga",
+  name: "manga1",
   meta: {
     otherNames: ["mangaai", "mangagen", "animeart"],
     author: "Christus Dev AI",
