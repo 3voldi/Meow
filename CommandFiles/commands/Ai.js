@@ -31,16 +31,16 @@ return message.reply("❌ Please provide a question or message for Christus Bot 
 try {
 const url = https://arychauhann.onrender.com/api/gemini-proxy2?prompt=${encodeURIComponent(text)};
 
-const res = await axios.get(url, {  
-  headers: { "Content-Type": "application/json" }  
-});  
+const res = await axios.get(url, {    
+  headers: { "Content-Type": "application/json" }    
+});    
 
-if (!res.data || !res.data.result) {  
-  return message.reply("⚠️ No response received from the Christus Bot AI. Please try again later.");  
-}  
+if (!res.data || !res.data.result) {    
+  return message.reply("⚠️ No response received from the Christus Bot AI. Please try again later.");    
+}    
 
-const response = res.data.result.trim();  
-const timestamp = new Date().toLocaleString("en-US", { timeZone: "UTC" });  
+const response = res.data.result.trim();    
+const timestamp = new Date().toLocaleString("en-US", { timeZone: "UTC" });    
 
 const formattedMessage =
 
@@ -48,7 +48,7 @@ const formattedMessage =
 ${style.title}
 ━━━━━━━━━━━━━━━
 💬 𝗬𝗼𝘂 𝗮𝘀𝗸𝗲𝗱: ${text}
-💡 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗔𝗶 𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲: ${response}
+💡 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗕𝗼𝘁'𝘀 𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲: ${response}
 
 📅 𝗧𝗶𝗺𝗲𝘀𝘁𝗮𝗺𝗽: ${timestamp} UTC
 ━━━━━━━ ✕ ━━━━━━
