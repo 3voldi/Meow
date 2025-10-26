@@ -1,27 +1,26 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { StrictOutputForm } from "output-cassidy";
 
-// ─────────────── CONFIGURATION DE LA COMMANDE ───────────────
 const cmd = easyCMD({
   name: "deepseek",
   meta: {
-    otherNames: ["ds3", "deepseek3", "askai", "brain"],
+    otherNames: ["ds3", "askds", "seekai"],
     author: "Christus Dev AI",
     description:
-      "💡 DeepSeek 3 — An advanced AI oracle that responds with style and intelligence.",
-    icon: "🌌",
-    version: "2.0.0",
+      "Talk with DeepSeek 3 — a smart and reliable AI assistant from Christus Bot.",
+    icon: "🧠",
+    version: "1.5.0",
     noPrefix: "both",
   },
   title: {
-    content: "🌌 DEEPSEEK 3 SYSTEM 🧠",
-    text_font: "futuristic",
-    line_bottom: "glow",
+    content: "DeepSeek 3 AI 💡",
+    text_font: "bold",
+    line_bottom: "default",
   },
   content: {
-    content: "Type your question or idea, and watch the cosmos reply...",
-    text_font: "italic",
-    line_bottom: "fade",
+    content: null,
+    text_font: "none",
+    line_bottom: "hidden",
   },
   run(ctx) {
     return main(ctx);
@@ -31,10 +30,8 @@ const cmd = easyCMD({
 export interface ResponseType {
   status: boolean;
   result?: string;
-  id?: string;
 }
 
-// ─────────────── LOGIQUE PRINCIPALE ───────────────
 async function main({
   output,
   args,
@@ -44,23 +41,20 @@ async function main({
   cancelCooldown,
 }: CommandContext) {
   const ask = args.join(" ");
-  await output.reaction("⚙️");
+  await output.reaction("🕐");
 
-  // 🧩 Vérification entrée utilisateur
   if (!ask) {
     cancelCooldown();
     await output.reaction("❌");
     return output.reply(
-      `💭 **Missing question!**\n\nTry:\n> ${prefix}${commandName} How does AI dream?`
+      `💬 Please enter a message for **DeepSeek 3**.\n\nExample: ${prefix}${commandName} Explain quantum computing.`
     );
   }
 
   try {
-    // 🛰️ API Call
     const apiURL = `https://arychauhann.onrender.com/api/deepseek3?prompt=${encodeURIComponent(
       ask
     )}`;
-
     const headers: AxiosRequestConfig["headers"] = {
       "Content-Type": "application/json",
     };
@@ -70,42 +64,28 @@ async function main({
       timeout: 25_000,
     });
 
-    const answer = res.data?.result?.trim() || "⚠️ No response from DeepSeek 3.";
-    const threadId = res.data?.id ? `🧾 **Thread ID:** \`${res.data.id}\`` : "";
+    const answer =
+      res.data?.result?.trim() || "⚠️ No response received from DeepSeek 3.";
 
-    // 🌈 Création du message stylé
     const form: StrictOutputForm = {
-      body: `╭─── 🌌 **DEEPSEEK 3 SYSTEM ONLINE** ───╮
-│ 👤 **User:** ${input.senderName || "Unknown"}
-│ 💬 **Prompt:** ${ask}
-│ 🧠 **Response:**
-│ ${answer}
-╰─────────────────────────────╯
-
-${threadId}
-✨ *You can reply below to continue the conversation.*`,
+      body: `🧠 **DeepSeek 3**\n\n${answer}\n\n***Reply to continue the conversation.***`,
     };
 
-    // 🟢 Indicateur de réussite
-    await output.reaction("🚀");
-
+    await output.reaction("✅");
     const info = await output.reply(form);
 
-    // 💬 Gestion des réponses threadées
-    info.atReply(async (rep) => {
+    info.atReply((rep) => {
       rep.output.setStyle(cmd.style);
-      await output.reaction("🌀");
-      await main({ ...rep, args: rep.input.words });
+      main({ ...rep, args: rep.input.words });
     });
   } catch (err: any) {
     console.error("Error calling DeepSeek 3 API:", err?.message || err);
-    await output.reaction("🔻");
+    await output.reaction("⚠️");
     cancelCooldown();
     return output.reply(
-      `⚠️ **Error connecting to DeepSeek 3 API**\n\n> Message: \`${err?.message || "Unknown error"}\`\n> Try again later.`
+      `❗ **API connection error**\n\nMessage: ${err?.message || "Unknown error"}`
     );
   }
 }
 
-// ─────────────── EXPORT ───────────────
 export default cmd;
