@@ -3,9 +3,7 @@ import { StrictOutputForm } from "output-cassidy";
 import path from "path";
 import * as fs from "fs";
 
-// ======================================
 // 🌌 ❲ CassidyAstral ❳
-// ======================================
 const cmd = easyCMD({
   name: "callad",
   meta: {
@@ -14,7 +12,7 @@ const cmd = easyCMD({
     description:
       "Report a message to admins with optional category and anonymity, or respond to reports.",
     icon: "📝",
-    version: "1.1.9",
+    version: "1.2.0",
     noPrefix: false,
   },
   title: {
@@ -32,9 +30,6 @@ const cmd = easyCMD({
   },
 });
 
-// ======================================
-// INTERFACES
-// ======================================
 interface CalladReport {
   senderID: string;
   senderName: string;
@@ -43,23 +38,15 @@ interface CalladReport {
   anonymous?: boolean;
 }
 
-// Mémoire temporaire pour les réponses admin
 const adminReplies: Record<string, { userID: string }> = {};
 
 // ======================================
-// MAIN FUNCTION
+// 🧠 Main function
 // ======================================
-async function main({
-  output,
-  args,
-  input,
-  usersDB,
-  threadsData,
-  api,
-}: CommandContext) {
+async function main({ output, args, input, api, usersDB }: CommandContext) {
   await output.reaction("🟡");
 
-  if (args.length === 0) {
+  if (!args.length) {
     await output.reaction("🔴");
     return output.reply(
       `⚠️ Usage: +callad [-c <category>] [-a] <message>\n\nExample:\n+callad -c bug Le bot ne répond plus correctement`
@@ -89,10 +76,9 @@ async function main({
     return output.reply("⚠️ Merci de préciser un message à envoyer.");
   }
 
-  const userInfo = await usersDB.getUserInfo(input.sid);
+  const userInfo = await usersDB?.getUserInfo?.(input.sid).catch(() => null);
   const senderName = userInfo?.name || input.name || "Utilisateur inconnu";
 
-  // Création du rapport
   const report: CalladReport = {
     senderID: input.sid,
     senderName,
@@ -116,51 +102,46 @@ ${messageBody}
 ━━━━━━━━━━━━━━━
   `.trim();
 
-  output.setStyle(cmd.style);
-
-  // Récupération de tous les admins
-  const allThreads = await threadsData.getAll();
-  const adminThreads = allThreads.filter(
-    (t) => t.isGroup && t.adminIDs?.length > 0
-  );
+  // 🔍 Récupérer la liste des groupes via l’API Messenger
+  let groupThreads: any[] = [];
+  try {
+    const threads = await api.getThreadList(100, null, ["INBOX"]);
+    groupThreads = threads.filter((t: any) => t.isGroup && t.participantIDs?.length > 0);
+  } catch (err) {
+    console.error("❌ Impossible de récupérer la liste des threads :", err);
+    return output.reply("⚠️ Erreur interne : impossible d’accéder aux groupes.");
+  }
 
   let sendSuccess = 0;
-
-  for (const thread of adminThreads) {
+  for (const thread of groupThreads) {
     try {
       const sent = await api.sendMessage(formattedReport, thread.threadID);
       adminReplies[sent.messageID] = { userID: input.sid };
       sendSuccess++;
     } catch (err) {
-      console.error(`[❌] Erreur d'envoi à ${thread.threadID}:`, err);
+      console.warn(`⚠️ Erreur d’envoi dans ${thread.threadID}`);
     }
   }
 
   await output.reaction("🟢");
   await output.reply(
-    `✅ Rapport envoyé avec succès à ${sendSuccess} admin(s) !\nMerci pour ton retour 💫`
+    `✅ Rapport envoyé à ${sendSuccess} admin(s) de groupe.\nMerci pour ton signalement 💫`
   );
 }
 
 // ======================================
-// SYSTEME DE RÉPONSE ADMIN
+// 📩 Réponse admin (reply system)
 // ======================================
 export async function onReply({ api, event }: any) {
   const replyData = adminReplies[event.messageReply?.messageID];
   if (!replyData) return;
 
   try {
-    await api.sendMessage(
-      `📩 Réponse de l’admin :\n${event.body}`,
-      replyData.userID
-    );
+    await api.sendMessage(`📩 Réponse d’un admin :\n${event.body}`, replyData.userID);
     delete adminReplies[event.messageReply.messageID];
   } catch (err) {
     console.error("Erreur lors de la réponse admin :", err);
   }
 }
 
-// ======================================
-// EXPORT FINAL
-// ======================================
 export default cmd;
