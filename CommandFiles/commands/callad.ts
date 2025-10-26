@@ -3,16 +3,15 @@ import { StrictOutputForm } from "output-cassidy";
 import path from "path";
 import * as fs from "fs";
 
-// 🌌 ❲ CassidyAstral ❳
 const cmd = easyCMD({
   name: "callad",
   meta: {
     otherNames: ["report", "re"],
-    author: "Christus",
+    author: "MrkimstersDev | Liane",
     description:
       "Report a message to admins with optional category and anonymity, or respond to reports.",
     icon: "📝",
-    version: "1.2.0",
+    version: "1.2.1",
     noPrefix: false,
   },
   title: {
@@ -40,10 +39,7 @@ interface CalladReport {
 
 const adminReplies: Record<string, { userID: string }> = {};
 
-// ======================================
-// 🧠 Main function
-// ======================================
-async function main({ output, args, input, api, usersDB }: CommandContext) {
+async function main({ output, args, input, api, usersDB, threadsData }: CommandContext) {
   await output.reaction("🟡");
 
   if (!args.length) {
@@ -53,7 +49,7 @@ async function main({ output, args, input, api, usersDB }: CommandContext) {
     );
   }
 
-  // Parse les arguments
+  // Parse args
   let category: string | undefined;
   let anonymous = false;
   const messageParts: string[] = [];
@@ -102,35 +98,45 @@ ${messageBody}
 ━━━━━━━━━━━━━━━
   `.trim();
 
-  // 🔍 Récupérer la liste des groupes via l’API Messenger
-  let groupThreads: any[] = [];
+  // 🔍 Récupération des groupes (multi-compatibilité)
+  let threads: any[] = [];
+
   try {
-    const threads = await api.getThreadList(100, null, ["INBOX"]);
-    groupThreads = threads.filter((t: any) => t.isGroup && t.participantIDs?.length > 0);
+    if (threadsData?.getAll) {
+      threads = await threadsData.getAll();
+    } else if (global.GoatBot?.threadsData?.getAll) {
+      threads = await global.GoatBot.threadsData.getAll();
+    } else {
+      console.warn("⚠️ Aucun accès à threadsData, envoi uniquement au groupe actuel.");
+      threads = [{ threadID: input.threadID }];
+    }
   } catch (err) {
-    console.error("❌ Impossible de récupérer la liste des threads :", err);
-    return output.reply("⚠️ Erreur interne : impossible d’accéder aux groupes.");
+    console.error("❌ Erreur récupération threads:", err);
+    threads = [{ threadID: input.threadID }];
   }
 
-  let sendSuccess = 0;
-  for (const thread of groupThreads) {
+  // Filtrer les groupes actifs
+  const groups = threads.filter((t: any) => t?.threadID);
+  let sentCount = 0;
+
+  for (const thread of groups) {
     try {
       const sent = await api.sendMessage(formattedReport, thread.threadID);
       adminReplies[sent.messageID] = { userID: input.sid };
-      sendSuccess++;
+      sentCount++;
     } catch (err) {
-      console.warn(`⚠️ Erreur d’envoi dans ${thread.threadID}`);
+      console.warn(`⚠️ Envoi échoué pour ${thread.threadID}`);
     }
   }
 
   await output.reaction("🟢");
   await output.reply(
-    `✅ Rapport envoyé à ${sendSuccess} admin(s) de groupe.\nMerci pour ton signalement 💫`
+    `✅ Rapport envoyé avec succès à ${sentCount} admin(s) de groupe.\nMerci pour ton signalement 💫`
   );
 }
 
 // ======================================
-// 📩 Réponse admin (reply system)
+// 📩 Réponse admin
 // ======================================
 export async function onReply({ api, event }: any) {
   const replyData = adminReplies[event.messageReply?.messageID];
