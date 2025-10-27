@@ -2,14 +2,14 @@ export const meta = {
     name: "notification",
     otherNames: ["notif", "announce"],
     author: "Christus",
-    version: "1.0.0",
+    version: "1.0.1",
     description: "Envoie une notification dans tous les groupes où le bot est présent.",
     usage: "{prefix}notification <message>",
     category: "Admin",
     noPrefix: false,
-    permissions: [2], // 2 = bot admin seulement
+    permissions: [2], // bot admin seulement
     botAdmin: true,
-    waitingTime: 30, // cooldown en secondes
+    waitingTime: 30,
     ext_plugins: {
         output: "^1.0.0"
     },
@@ -31,10 +31,13 @@ export async function entry({ input, output, api }) {
     if (!message) return output.reply("Veuillez fournir un message pour la notification.");
 
     try {
-        const threads = await api.getThreads(); // récupère tous les threads/groupes du bot
-        let count = 0;
+        // Récupère tous les threads connus par le bot
+        const threads = api.threads || []; 
 
+        let count = 0;
         for (const thread of threads) {
+            // Vérifie que c'est un groupe ou thread actif
+            if (!thread.threadID) continue;
             await output.send(message, thread.threadID);
             count++;
         }
