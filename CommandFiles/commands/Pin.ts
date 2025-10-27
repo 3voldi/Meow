@@ -1,102 +1,110 @@
 /*
-@XaviaCMD
-@Christus
+@Christus x Aesther
+Pinterest Image Search Command (TypeScript)
 */
 
 import axios from "axios";
 import fs from "fs-extra";
 import path from "path";
+import { defineCommand } from "@cassidy/command";
+import { UNISpectra } from "@cassidy/unispectra";
 
-const config = {
-  name: "pin",
-  aliases: ["pinterest"],
-  version: "2.0.1",
-  permissions: [0],
-  credits: "Christus x Aesther",
-  description: "Pinterest Image Search powered by Christus Bot",
-  category: "Downloader",
-  usages: "[query] - [number]",
-  cooldown: 10
-};
+interface PinterestResponse {
+  status: boolean;
+  data: string[];
+}
 
-const getBaseApiUrl = async (): Promise<string> => {
-  const { data } = await axios.get(
+async function baseApiUrl(): Promise<string> {
+  const base = await axios.get(
     "https://raw.githubusercontent.com/Mostakim0978/D1PT0/refs/heads/main/baseApiUrl.json"
   );
-  return data.api;
-};
+  return base.data.api;
+}
 
-export default {
-  config,
+const command = defineCommand({
+  meta: {
+    name: "pin",
+    otherNames: ["pinterest"],
+    version: "2.0.0",
+    author: "Christus x Aesther",
+    description: "Rechercher des images sur Pinterest",
+    category: "Download",
+    role: 0,
+    allowModerators: true,
+    noPrefix: false,
+    icon: "📸",
+    cmdType: "media_dl",
+  },
 
-  // Utilise la même signature que ta commande JS d'origine
-  onStart: async function ({ api, event, args }: { api: any; event: any; args: string[] }) {
-    const queryAndLength = args.join(" ").split("-");
-    const q = queryAndLength[0]?.trim();
-    const lengthStr = queryAndLength[1]?.trim();
+  style: {
+    title: "📍 Pinterest Image Search",
+    titleFont: "bold",
+    contentFont: "clean",
+    topLine: "double",
+  },
 
-    if (!q || !lengthStr) {
-      return api.sendMessage("❌| Wrong Format. Usage: pin <query> - <number>", event.threadID, event.messageID);
+  async entry({ input, output, style }) {
+    const args = input.text.split("-");
+    const query = args[0]?.trim();
+    const limit = parseInt(args[1]?.trim());
+
+    if (!query || !limit || isNaN(limit)) {
+      return output.replyStyled(
+        "❌ | Format incorrect.\nUtilisation : **pin <mot clé> - <nombre>**\nExemple : `pin cat - 5`",
+        style
+      );
     }
 
-    const limit = parseInt(lengthStr, 10);
-    if (Number.isNaN(limit) || limit <= 0) {
-      return api.sendMessage("❌| Invalid number for limit.", event.threadID, event.messageID);
-    }
+    const waiting = await output.replyStyled(
+      `${UNISpectra.dots} Recherche d’images pour **${query}**...`,
+      style
+    );
 
-    // dossier temporaire pour stocker les images
-    const tempDir = path.join(__dirname, "temp_pinterest");
     try {
-      const waitMsg = await api.sendMessage("🔎 Please wait... fetching images", event.threadID);
+      const apiUrl = await baseApiUrl();
+      const response = await axios.get<PinterestResponse>(
+        `${apiUrl}/pinterest?search=${encodeURIComponent(query)}&limit=${encodeURIComponent(
+          limit.toString()
+        )}`
+      );
 
-      const apiBase = await getBaseApiUrl();
-      const res = await axios.get(`${apiBase}/pinterest?search=${encodeURIComponent(q)}&limit=${encodeURIComponent(limit)}`);
-      const data: string[] = res.data?.data;
-
+      const data = response.data.data;
       if (!data || data.length === 0) {
-        // retire le message d'attente si possible
-        try { await api.unsendMessage(waitMsg.messageID); } catch (e) { /* ignore */ }
-        return api.sendMessage("⚠️ Empty response or no images found.", event.threadID, event.messageID);
+        return output.replyStyled(
+          "❌ | Aucun résultat trouvé pour ta recherche.",
+          style
+        );
       }
 
-      const totalImagesCount = Math.min(data.length, limit);
-      const attachments: fs.ReadStream[] = [];
+      const totalImages = Math.min(data.length, limit);
+      const attachments: any[] = [];
 
-      await fs.ensureDir(tempDir);
-
-      for (let i = 0; i < totalImagesCount; i++) {
+      for (let i = 0; i < totalImages; i++) {
         const imgUrl = data[i];
-        const imgBuffer = (await axios.get(imgUrl, { responseType: "arraybuffer" })).data;
-        const imgPath = path.join(tempDir, `${Date.now()}_${i + 1}.jpg`);
-        await fs.outputFile(imgPath, imgBuffer);
-        attachments.push(fs.createReadStream(imgPath));
+        const imgBuffer = await axios.get(imgUrl, { responseType: "arraybuffer" });
+        const filePath = path.join(process.cwd(), "temp", `pin_${i + 1}.jpg`);
+        await fs.outputFile(filePath, imgBuffer.data);
+        attachments.push(fs.createReadStream(filePath));
       }
 
-      // retire le message d'attente
-      try { await api.unsendMessage(waitMsg.messageID); } catch (e) { /* ignore */ }
+      await output.unsend(waiting.messageID);
 
-      const formattedMessage =
-`━━━━━━━━━━━━━━━
-🇨🇮 𝗖𝗵𝗿𝗶𝘀𝘁𝘂𝘀 𝗣𝗶𝗻𝘁𝗲𝗿𝗲𝘀𝘁 🇨🇮
-━━━━━━━━━━━━━━━
-📌 𝗤𝘂𝗲𝗿𝘆: ${q}
-🖼️ 𝗜𝗺𝗮𝗴𝗲𝘀 𝗦𝗲𝗻𝘁: ${totalImagesCount}
+      await output.replyStyled(
+        `✅ | Voici les résultats pour **${query}**\n✏️ | Total : **${totalImages}** images`,
+        style,
+        attachments
+      );
 
-━━━━━━━ ✕ ━━━━━━
-𝖡𝗋𝗈𝗐𝗌𝗂𝗇𝗀 𝗧𝗁𝗋𝗈𝗎𝗀𝗁 𝗜𝗺𝗮𝗴𝗶𝗻𝗮𝘁𝗶𝗼𝗻 🇨🇮`;
-
-      await api.sendMessage({ body: formattedMessage, attachment: attachments }, event.threadID, event.messageID);
-
-      // cleanup: fermer les streams et supprimer le dossier temporaire
-      try {
-        attachments.forEach((s: any) => { if (s && typeof s.close === "function") s.close(); });
-        await fs.remove(tempDir);
-      } catch (cleanupErr) {
-        console.warn("Cleanup failed:", cleanupErr);
+      // Nettoyage des fichiers temporaires
+      for (let i = 0; i < totalImages; i++) {
+        const filePath = path.join(process.cwd(), "temp", `pin_${i + 1}.jpg`);
+        await fs.remove(filePath);
       }
     } catch (error: any) {
       console.error(error);
-      return api.sendMessage(`❌ Error: ${error?.message || error}`, event.threadID, event.messageID);
+      await output.replyStyled(`❌ | Erreur : ${error.message}`, style);
     }
-  }
-};
+  },
+});
+
+export default command;
