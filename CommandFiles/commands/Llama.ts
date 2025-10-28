@@ -4,7 +4,7 @@ import { StrictOutputForm } from "output-cassidy";
 const cmd = easyCMD({
   name: "llama",
   meta: {
-    otherNames: ["lla", "llama4", "askllama"],
+    otherNames: ["ai", "llama4", "askllama"],
     author: "Christus Dev AI",
     description:
       "A conversational AI powered by LLaMA-4 Maverick 17B Instruct.",
