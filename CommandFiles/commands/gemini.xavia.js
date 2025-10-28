@@ -6,7 +6,7 @@
 import axios from "axios";
 
 const config = {
-  name: "gemini",
+  name: "ai",
   version: "2.3.0",
   permissions: [0],
   noPrefix: "both",
